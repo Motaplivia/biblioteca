@@ -1,4 +1,4 @@
-# Interface Gráfica Farmácia API
+# Interface Gráfica Biblioteca API
 
 ---
 
