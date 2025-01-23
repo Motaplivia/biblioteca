@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<div class="container mt-5">
+    <h1 class="display-4 text-primary text-center">Adicionar Empréstimo</h1>
+    <hr class="border-primary border-2">
+
+    <form action="/emprestimos/adicionar" method="POST">
+        <div class="form-group">
+            <label for="livro_id">Livro</label>
+            <select id="livro_id" name="livro_id" class="form-control shadow-sm" required>
+            </select>
+        </div>
+
+        <div class="form-group mt-3">
+            <label for="cliente_id">Cliente</label>
+            <select id="cliente_id" name="cliente_id" class="form-control shadow-sm" required>
+            </select>
+        </div>
+
+        <div class="form-group mt-3">
+            <label for="data_emprestimo">Data de Empréstimo</label>
+            <input type="date" id="data_emprestimo" name="data_emprestimo" class="form-control shadow-sm" required>
+        </div>
+
+        <div class="form-group mt-3">
+            <label for="data_devolucao">Data de Devolução</label>
+            <input type="date" id="data_devolucao" name="data_devolucao" class="form-control shadow-sm" required>
+        </div>
+
+        <div class="form-group mt-3 text-center">
+            <button type="submit" class="btn btn-outline-primary btn-lg shadow-sm">Salvar Empréstimo</button>
+        </div>
+    </form>
+</div>
+
+{% endblock %}

@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<div class="container mt-5">
+    <h1 class="display-4 text-primary text-center">Lista de Empréstimos</h1>
+    <hr class="border-primary border-2">
+
+    <div class="text-center mb-4">
+        <a href="/emprestimos/adicionar" class="btn btn-outline-success btn-lg shadow-sm">Adicionar Novo Empréstimo</a>
+    </div>
+
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Livro</th>
+                <th>Cliente</th>
+                <th>Data de Empréstimo</th>
+                <th>Data de Devolução</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for emprestimo in emprestimos %}
+            <tr>
+                <td>{{ emprestimo.id }}</td>
+                <td>{{ emprestimo.livro.name }}</td>
+                <td>{{ emprestimo.cliente.name }}</td>
+                <td>{{ emprestimo.data_emprestimo }}</td>
+                <td>{{ emprestimo.data_devolucao }}</td>
+                <td>
+                    <a href="/emprestimos/editar/{{ emprestimo.id }}" class="btn btn-outline-warning btn-sm shadow-sm">Editar</a>
+                    <a href="/emprestimos/deletar/{{ emprestimo.id }}" class="btn btn-outline-danger btn-sm shadow-sm">Deletar</a>
+                </td>   
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% endblock %}
