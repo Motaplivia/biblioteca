@@ -5,9 +5,9 @@
 ## Como Clonar
 
 1. **Clone o Repositório**:
-   - No terminal, execute o comando abaixo para clonar a branch específica do projeto:   
+   - No terminal, execute o comando abaixo para clonar o projeto:   
    ```
-   git clone --branch jinja2 https://github.com/Leititcia/farmaAPI.git
+   https://github.com/Motaplivia/biblioteca.git
    ```
 
 2. **Crie e Ative um Ambiente Virtual**:
@@ -37,5 +37,3 @@
 
 ---
 
-## Autora
-Letícia Vale.
