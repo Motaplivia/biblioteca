@@ -1,4 +1,5 @@
 from pydantic import BaseModel
+from typing import List, Optional
 
 # Pydantic Models para Livro
 class LivroBase(BaseModel):
@@ -9,6 +10,7 @@ class LivroBase(BaseModel):
 
 class Livro(LivroBase):
     id: int
+    categoria: Optional['Categoria']  # Relacionamento com Categoria
 
     class Config:
         orm_mode = True
@@ -23,6 +25,7 @@ class CategoriaBase(BaseModel):
 
 class Categoria(CategoriaBase):
     id: int
+    livros: List[Livro] = []  # Lista de livros relacionados
 
     class Config:
         orm_mode = True
@@ -38,6 +41,7 @@ class EmprestimoBase(BaseModel):
 
 class Emprestimo(EmprestimoBase):
     id: int
+    livro: Livro  # Relacionamento com o livro
 
     class Config:
         orm_mode = True

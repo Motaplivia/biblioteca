@@ -1,0 +1,30 @@
+version: '3'
+services:
+  postgres:
+    image: postgres
+    container_name: postgres
+    ports:
+      - '5432:5432'
+    restart: always
+    env_file:
+      - ./.env
+    volumes:
+      - postgres-db:/var/lib/postgresql/data
+
+  app:
+    build: ./  # Caminho para o diretório onde está o Dockerfile da aplicação
+    container_name: app
+    ports:
+      - "8000:8000"
+    depends_on:
+      - postgres
+    environment:
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=nome_do_banco
+      - DB_USER=usuario
+      - DB_PASSWORD=senha
+    restart: always
+
+volumes:
+  postgres-db:

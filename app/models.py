@@ -1,7 +1,8 @@
-from sqlalchemy import Column, Integer, String, Float, ForeignKey
+from sqlalchemy import Column, Integer, String, ForeignKey
 from sqlalchemy.orm import relationship
-from .database import Base
+from .database import Base  
 
+# Modelo para a tabela Livro
 class Livro(Base):
     __tablename__ = 'livros'
 
@@ -14,10 +15,10 @@ class Livro(Base):
     # Relacionamento com a tabela Categoria
     categoria = relationship("Categoria", back_populates="livros")
 
-# Modelo para Categoria
-from sqlalchemy import Column, Integer, String
-from .database import Base
+    # Relacionamento com a tabela Emprestimo
+    emprestimos = relationship("Emprestimo", back_populates="livro")
 
+# Modelo para a tabela Categoria
 class Categoria(Base):
     __tablename__ = 'categorias'
 
@@ -28,6 +29,7 @@ class Categoria(Base):
     # Relacionamento com a tabela Livro
     livros = relationship("Livro", back_populates="categoria")
 
+# Modelo para a tabela Emprestimo
 class Emprestimo(Base):
     __tablename__ = 'emprestimos'
 
@@ -36,4 +38,5 @@ class Emprestimo(Base):
     cliente_nome = Column(String, index=True)
     data_emprestimo = Column(String, index=True)
 
-    livro = relationship("Livro")
+    # Relacionamento com a tabela Livro
+    livro = relationship("Livro", back_populates="emprestimos")

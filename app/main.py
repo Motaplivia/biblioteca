@@ -178,28 +178,24 @@ def add_emprestimo_form(request: Request, db: Session = Depends(get_db)):
     livros = db.query(models.Livro).all()  # Recuperar todos os livros
     return templates.TemplateResponse("adicionar_emprestimo.html", {"request": request, "livros": livros})
 
-@app.route('/emprestimos/adicionar', methods=['GET', 'POST'])
-def adicionar_emprestimo():
-    if request.method == 'POST':
-        livro_id = request.form.get('livro_id')
-        usuario = request.form.get('usuario')
-        data_emprestimo = request.form.get('data_emprestimo')
-        data_devolucao = request.form.get('data_devolucao')
-
-        # Processa o empréstimo (salva no banco, validações, etc.)
-        novo_emprestimo = Emprestimo(
-            livro_id=livro_id,
-            usuario=usuario,
-            data_emprestimo=data_emprestimo,
-            data_devolucao=data_devolucao
-        )
-        db.session.add(novo_emprestimo)
-        db.session.commit()
-        return redirect('/emprestimos')
-
-    # Carregar livros do banco de dados
-    livros = Livro.query.all()
-    return render_template('adicionar_emprestimo.html', livros=livros)
+@app.post("/emprestimos/adicionar")
+async def adicionar_emprestimo(
+    livro_id: int = Form(...),
+    usuario: str = Form(...),
+    data_emprestimo: str = Form(...),
+    data_devolucao: str = Form(...),
+    db: Session = Depends(get_db)
+):
+    novo_emprestimo = models.Emprestimo(
+        livro_id=livro_id,
+        usuario=usuario,
+        data_emprestimo=data_emprestimo,
+        data_devolucao=data_devolucao
+    )
+    db.add(novo_emprestimo)
+    db.commit()
+    db.refresh(novo_emprestimo)
+    return RedirectResponse(url="/emprestimos", status_code=status.HTTP_303_SEE_OTHER)
 
 @app.get("/emprestimos/editar/{emprestimo_id}")
 def edit_emprestimo_form(emprestimo_id: int, request: Request, db: Session = Depends(get_db)):
@@ -209,11 +205,12 @@ def edit_emprestimo_form(emprestimo_id: int, request: Request, db: Session = Dep
     return templates.TemplateResponse("editar_emprestimo.html", {"request": request, "emprestimo": emprestimo})
 
 @app.post("/emprestimos/editar/{emprestimo_id}")
-def edit_emprestimo(
+async def edit_emprestimo(
     emprestimo_id: int,
     livro_id: int = Form(...),
-    cliente_nome: str = Form(...),
+    usuario: str = Form(...),
     data_emprestimo: str = Form(...),
+    data_devolucao: str = Form(...),
     db: Session = Depends(get_db)
 ):
     emprestimo = db.query(models.Emprestimo).filter(models.Emprestimo.id == emprestimo_id).first()
@@ -221,8 +218,9 @@ def edit_emprestimo(
         raise HTTPException(status_code=404, detail="Empréstimo não encontrado.")
     
     emprestimo.livro_id = livro_id
-    emprestimo.cliente_nome = cliente_nome
+    emprestimo.usuario = usuario
     emprestimo.data_emprestimo = data_emprestimo
+    emprestimo.data_devolucao = data_devolucao
     
     db.commit()
     db.refresh(emprestimo)
@@ -244,3 +242,4 @@ def delete_emprestimo(emprestimo_id: int, db: Session = Depends(get_db)):
     db.delete(emprestimo)
     db.commit()
     return RedirectResponse(url="/emprestimos", status_code=status.HTTP_303_SEE_OTHER)
+
