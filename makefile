@@ -1,8 +1,7 @@
-dev:
-	docker-compose up -d
+.PHONY: up down
 
-dev-down:
-	docker-compose down
+up:
+	docker compose -f docker-compose.yml up -d --build
 
-server:
-	uvicorn app.main:app --reload
+down: 
+	docker compose -f docker-compose.yml down

@@ -5,6 +5,8 @@ from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 from fastapi.responses import RedirectResponse
 from . import schemas
+from fastapi.middleware.cors import CORSMiddleware
+
 
 from .routers.livros import router as routerLivros
 from .routers.categorias import router as routerCategorias
@@ -15,13 +17,22 @@ models.Base.metadata.create_all(bind=engine)
 
 templates = Jinja2Templates(directory="templates")
 
+
 app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],  
+    allow_headers=["*"],  
+)
 
 app.include_router(routerLivros, tags=['livros'], prefix='/api')
 app.include_router(routerCategorias, tags=['categorias'], prefix='/api')
 app.include_router(routerEmprestimos, tags=['emprestimos'], prefix='/api')
 
-@app.get("/")
+@app.get("/", tags=["Root"])
 def root(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
 
