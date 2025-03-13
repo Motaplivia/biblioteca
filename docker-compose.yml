@@ -1,44 +1,31 @@
-version: '3.8'
-
+version: '3'
 services:
-  app:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    volumes:
-      - .:/app
-    container_name: biblioteca
-    ports:
-      - "8000:8000"
-    depends_on:
-      postgres:
-        condition: service_healthy
-    env_file:
-      - ./.env
-    networks:
-      - shared_network
-
   postgres:
     image: postgres
     container_name: postgres
-    networks:
-      - shared_network
     ports:
       - '5432:5432'
     restart: always
     env_file:
       - ./.env
     volumes:
-      - postgres_data:/var/lib/postgresql/data
-    healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U $POSTGRES_USER -d $POSTGRES_DB" ]
-      interval: 5s
-      timeout: 5s
-      retries: 5
+      - postgres-db:/var/lib/postgresql/data
 
-networks:
-  shared_network:
-    driver: bridge
-    
+  app:
+    build: ./
+    container_name: app
+    ports:
+      - "8000:8000"
+    depends_on:
+      - postgres
+    environment:
+      - DATABASE_PORT=5432
+      - POSTGRES_PASSWORD=1234
+      - POSTGRES_USER=postgres
+      - POSTGRES_DB=fastapi
+      - POSTGRES_HOST=postgres
+      - POSTGRES_HOSTNAME=postgres
+    restart: always
+
 volumes:
-  postgres_data:
+  postgres-db:

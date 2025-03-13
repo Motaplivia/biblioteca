@@ -32,6 +32,17 @@ app.include_router(routerLivros, tags=['livros'], prefix='/api')
 app.include_router(routerCategorias, tags=['categorias'], prefix='/api')
 app.include_router(routerEmprestimos, tags=['emprestimos'], prefix='/api')
 
+
+@app.get("/test-db")
+def test_db(db: Session = Depends(get_db)):
+    try:
+        # Try a simple query
+        db.execute("SELECT 1")
+        return {"message": "Database connection successful!"}
+    except Exception as e:
+        return {"error": str(e)}
+
+
 @app.get("/", tags=["Root"])
 def root(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
@@ -192,14 +203,14 @@ def add_emprestimo_form(request: Request, db: Session = Depends(get_db)):
 @app.post("/emprestimos/adicionar")
 async def adicionar_emprestimo(
     livro_id: int = Form(...),
-    usuario: str = Form(...),
+    cliente_nome: str = Form(...),
     data_emprestimo: str = Form(...),
     data_devolucao: str = Form(...),
     db: Session = Depends(get_db)
 ):
     novo_emprestimo = models.Emprestimo(
         livro_id=livro_id,
-        usuario=usuario,
+        cliente_nome=cliente_nome,
         data_emprestimo=data_emprestimo,
         data_devolucao=data_devolucao
     )

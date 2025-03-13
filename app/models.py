@@ -37,6 +37,7 @@ class Emprestimo(Base):
     livro_id = Column(Integer, ForeignKey('livros.id'))
     cliente_nome = Column(String, index=True)
     data_emprestimo = Column(String, index=True)
+    data_devolucao = Column(String, index=True)
 
     # Relacionamento com a tabela Livro
     livro = relationship("Livro", back_populates="emprestimos")
