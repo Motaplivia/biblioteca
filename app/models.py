@@ -32,11 +32,11 @@ class Categoria(Base):
 # Modelo para a tabela Emprestimo
 class Emprestimo(Base):
     __tablename__ = 'emprestimos'
-
+    
     id = Column(Integer, primary_key=True, index=True)
     livro_id = Column(Integer, ForeignKey('livros.id'))
     cliente_nome = Column(String, index=True)
     data_emprestimo = Column(String, index=True)
-
-    # Relacionamento com a tabela Livro
+    data_devolucao = Column(String, index=True)
+    
     livro = relationship("Livro", back_populates="emprestimos")
