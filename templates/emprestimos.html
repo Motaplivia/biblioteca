@@ -1,42 +1,105 @@
 {% extends 'base.html' %}
 
 {% block content %}
-
-<div class="container mt-5">
-    <h1 class="display-4 text-primary text-center">Lista de Empréstimos</h1>
-    <hr class="border-primary border-2">
-
-    <div class="text-center mb-4">
-        <a href="/emprestimos/adicionar" class="btn btn-outline-success btn-lg shadow-sm">Adicionar Novo Empréstimo</a>
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col">
+            <div class="d-sm-flex align-items-center justify-content-between">
+                <h1 class="h3 mb-0 text-gray-800">Empréstimos</h1>
+                <a href="/emprestimos/adicionar" class="d-none d-sm-inline-block btn btn-primary shadow-sm">
+                    <i class="fas fa-plus fa-sm me-2"></i>Novo Empréstimo
+                </a>
+            </div>
+        </div>
     </div>
 
-    <table class="table table-striped">
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>Livro</th>
-                <th>Cliente</th>
-                <th>Data de Empréstimo</th>
-                <th>Data de Devolução</th>
-                <th></th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for emprestimo in emprestimos %}
-            <tr>
-                <td>{{ emprestimo.id }}</td>
-                <td>{{ emprestimo.livro.name }}</td>
-                <td>{{ emprestimo.cliente.name }}</td>
-                <td>{{ emprestimo.data_emprestimo }}</td>
-                <td>{{ emprestimo.data_devolucao }}</td>
-                <td>
-                    <a href="/emprestimos/editar/{{ emprestimo.id }}" class="btn btn-outline-warning btn-sm shadow-sm">Editar</a>
-                    <a href="/emprestimos/deletar/{{ emprestimo.id }}" class="btn btn-outline-danger btn-sm shadow-sm">Deletar</a>
-                </td>   
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+    <div class="card shadow mb-4">
+        <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+            <h6 class="m-0 font-weight-bold text-primary">Lista de Empréstimos</h6>
+            <div class="dropdown no-arrow">
+                <a href="/emprestimos/adicionar" class="btn btn-sm btn-primary shadow-sm d-sm-none">
+                    <i class="fas fa-plus fa-sm"></i>
+                </a>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th>ID</th>
+                            <th>Livro</th>
+                            <th>Usuário</th>
+                            <th>Data Empréstimo</th>
+                            <th>Devolução Prevista</th>
+                            <th>Devolução Efetiva</th>
+                            <th>Status</th>
+                            <th class="text-end">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for emprestimo in emprestimos %}
+                        <tr>
+                            <td>{{ emprestimo.id }}</td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <i class="fas fa-book text-primary me-2"></i>
+                                    <div>
+                                        <div class="fw-bold">{{ emprestimo.livro.titulo if emprestimo.livro else "N/A" }}</div>
+                                        <small class="text-muted">ISBN: {{ emprestimo.livro.isbn if emprestimo.livro else "N/A" }}</small>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <i class="fas fa-user text-secondary me-2"></i>
+                                    <div>
+                                        <div>{{ emprestimo.usuario.nome if emprestimo.usuario else "N/A" }}</div>
+                                        <small class="text-muted">{{ emprestimo.usuario.email if emprestimo.usuario else "" }}</small>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>{{ emprestimo.data_emprestimo.strftime('%d/%m/%Y') }}</td>
+                            <td>{{ emprestimo.data_devolucao_prevista.strftime('%d/%m/%Y') }}</td>
+                            <td>
+                                {% if emprestimo.data_devolucao_efetiva %}
+                                    {{ emprestimo.data_devolucao_efetiva.strftime('%d/%m/%Y') }}
+                                {% else %}
+                                    <span class="text-muted">-</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if emprestimo.status == "Ativo" %}
+                                    <span class="badge bg-primary rounded-pill">{{ emprestimo.status }}</span>
+                                {% elif emprestimo.status == "Devolvido" %}
+                                    <span class="badge bg-success rounded-pill">{{ emprestimo.status }}</span>
+                                {% else %}
+                                    <span class="badge bg-danger rounded-pill">{{ emprestimo.status }}</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="d-flex justify-content-end gap-2">
+                                    {% if emprestimo.status == "Ativo" %}
+                                        <form action="/emprestimos/{{ emprestimo.id }}/devolver" method="post" class="d-inline">
+                                            <button type="submit" class="btn btn-success btn-sm" title="Devolver">
+                                                <i class="fas fa-undo-alt"></i>
+                                            </button>
+                                        </form>
+                                    {% endif %}
+                                    <a href="/emprestimos/editar/{{ emprestimo.id }}" class="btn btn-warning btn-sm" title="Editar">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <a href="/emprestimos/deletar/{{ emprestimo.id }}" class="btn btn-danger btn-sm" title="Deletar">
+                                        <i class="fas fa-trash"></i>
+                                    </a>
+                                </div>
+                            </td>   
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
 </div>
-
 {% endblock %}

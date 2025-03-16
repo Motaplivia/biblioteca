@@ -1,43 +1,58 @@
 {% extends 'base.html' %}
 
 {% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow-lg border-0 rounded-lg">
+                <div class="card-header bg-primary bg-gradient text-white">
+                    <h3 class="text-center mb-0">Novo Empréstimo</h3>
+                </div>
+                <div class="card-body p-4">
+                    <form action="/emprestimos/adicionar" method="POST">
+                        <div class="mb-4">
+                            <label for="livro_id" class="form-label">Livro</label>
+                            <select id="livro_id" name="livro_id" class="form-select" required>
+                                <option value="">Selecione o livro</option>
+                                {% for livro in livros %}
+                                    <option value="{{ livro.id }}">{{ livro.titulo }} (ISBN: {{ livro.isbn }})</option>
+                                {% endfor %}
+                            </select>
+                            <div class="form-text">Selecione o livro que será emprestado</div>
+                        </div>
 
-<div class="container mt-5">
-    <h1 class="display-4 text-primary text-center">Adicionar Empréstimo</h1>
-    <hr class="border-primary border-2">
+                        <div class="mb-4">
+                            <label for="usuario_id" class="form-label">Usuário</label>
+                            <select id="usuario_id" name="usuario_id" class="form-select" required>
+                                <option value="">Selecione o usuário</option>
+                                {% for usuario in usuarios %}
+                                    <option value="{{ usuario.id }}">{{ usuario.nome }} ({{ usuario.email }})</option>
+                                {% endfor %}
+                            </select>
+                            <div class="form-text">Selecione o usuário que realizará o empréstimo</div>
+                        </div>
 
-    <form action="/emprestimos/adicionar" method="POST">
-        <div class="form-group">
-            <label for="livro_id">Livro</label>
-            <select id="livro_id" name="livro_id" class="form-control shadow-sm" required>
-                {% for livro in livros %}
-                    <option value="{{ livro.id }}">{{ livro.titulo }}</option>
-                {% endfor %}
-            </select>
+                        <div class="mb-4">
+                            <label for="data_devolucao_prevista" class="form-label">Data de Devolução Prevista</label>
+                            <input type="date" id="data_devolucao_prevista" name="data_devolucao_prevista" 
+                                   class="form-control" required
+                                   min="{{ hoje }}"
+                                   value="{{ data_padrao }}">
+                            <div class="form-text">A data de devolução deve ser posterior à data atual</div>
+                        </div>
+
+                        <div class="d-flex justify-content-end gap-2 mt-4">
+                            <a href="/emprestimos" class="btn btn-outline-secondary">
+                                <i class="fas fa-times me-2"></i>Cancelar
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-check me-2"></i>Registrar Empréstimo
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
         </div>
-    
-        <div class="form-group mt-3">
-            <label for="usuario">Cliente</label>
-            <input id="cliente_nome" name="cliente_nome" class="form-control shadow-sm" required>
-        </div>
-    
-        <div class="form-group mt-3">
-            <label for="data_emprestimo">Data de Empréstimo</label>
-            <input type="date" id="data_emprestimo" name="data_emprestimo" class="form-control shadow-sm" required>
-        </div>
-    
-        <div class="form-group mt-3">
-            <label for="data_devolucao">Data de Devolução</label>
-            <input type="date" id="data_devolucao" name="data_devolucao" class="form-control shadow-sm" required>
-        </div>
-    
-        <div class="form-group mt-3 text-center">
-            <button type="submit" class="btn btn-outline-primary btn-lg shadow-sm">Salvar Empréstimo</button>
-        </div>
-    </form>
-    
-    </form>
-    
+    </div>
 </div>
-
 {% endblock %}

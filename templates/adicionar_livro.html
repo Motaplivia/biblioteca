@@ -23,6 +23,18 @@
         </div>
 
         <div class="form-group mt-3">
+            <label for="isbn">ISBN</label>
+            <input type="text" id="isbn" name="isbn" class="form-control shadow-sm" placeholder="Digite o ISBN do livro" required minlength="10">
+            <small class="form-text text-muted">O ISBN deve ter no mínimo 10 caracteres.</small>
+        </div>
+
+        <div class="form-group mt-3">
+            <label for="quantidade">Quantidade</label>
+            <input type="number" id="quantidade" name="quantidade" class="form-control shadow-sm" placeholder="Digite a quantidade disponível" required min="1" value="1">
+            <small class="form-text text-muted">A quantidade mínima é 1.</small>
+        </div>
+
+        <div class="form-group mt-3">
             <label for="categoria_id">Categoria</label>
             <select id="categoria_id" name="categoria_id" class="form-control shadow-sm" required>
                 <!-- Exemplo de como você pode popular as categorias dinamicamente -->
@@ -33,7 +45,8 @@
             </select>
         </div>
 
-        <div class="form-group mt-3 text-center">
+        <div class="form-group mt-4 text-center">
+            <a href="/livros" class="btn btn-outline-secondary btn-lg shadow-sm me-2">Cancelar</a>
             <button type="submit" class="btn btn-outline-primary btn-lg shadow-sm">Salvar Livro</button>
         </div>
     </form>

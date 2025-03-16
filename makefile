@@ -1,7 +1,10 @@
-.PHONY: up down
+.PHONY: up down recreate-db
 
 up:
-	docker compose -f docker-compose.yml up -d --build
+	docker-compose up --build
 
-down: 
-	docker compose -f docker-compose.yml down
+down:
+	docker-compose down
+
+recreate-db:
+	docker-compose exec app python -m scripts.recreate_db

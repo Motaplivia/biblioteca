@@ -8,18 +8,46 @@
 
     <form action="/livros/editar/{{ livro.id }}" method="POST">
         <div class="form-group">
-            <label for="title">Título</label>
-            <input type="text" id="title" name="title" class="form-control shadow-sm" value="{{ livro.title }}" required>
+            <label for="titulo">Título</label>
+            <input type="text" id="titulo" name="titulo" class="form-control shadow-sm" value="{{ livro.titulo }}" required>
         </div>
+
         <div class="form-group mt-3">
-            <label for="author">Autor</label>
-            <input type="text" id="author" name="author" class="form-control shadow-sm" value="{{ livro.author }}" required>
+            <label for="autor">Autor</label>
+            <input type="text" id="autor" name="autor" class="form-control shadow-sm" value="{{ livro.autor }}" required>
         </div>
+
         <div class="form-group mt-3">
-            <label for="category">Categoria</label>
-            <input type="text" id="category" name="category" class="form-control shadow-sm" value="{{ livro.category }}">
+            <label for="ano_publicacao">Ano de Publicação</label>
+            <input type="number" id="ano_publicacao" name="ano_publicacao" class="form-control shadow-sm" value="{{ livro.ano_publicacao }}" required>
         </div>
+
         <div class="form-group mt-3">
+            <label for="isbn">ISBN</label>
+            <input type="text" id="isbn" name="isbn" class="form-control shadow-sm" value="{{ livro.isbn }}" required minlength="10">
+            <small class="form-text text-muted">O ISBN deve ter no mínimo 10 caracteres.</small>
+        </div>
+
+        <div class="form-group mt-3">
+            <label for="quantidade">Quantidade</label>
+            <input type="number" id="quantidade" name="quantidade" class="form-control shadow-sm" value="{{ livro.quantidade }}" required min="1">
+            <small class="form-text text-muted">A quantidade mínima é 1.</small>
+        </div>
+
+        <div class="form-group mt-3">
+            <label for="categoria_id">Categoria</label>
+            <select id="categoria_id" name="categoria_id" class="form-control shadow-sm" required>
+                <option value="">Selecione a categoria</option>
+                {% for categoria in categorias %}
+                    <option value="{{ categoria.id }}" {% if categoria.id == livro.categoria_id %}selected{% endif %}>
+                        {{ categoria.nome }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="form-group mt-4 text-center">
+            <a href="/livros" class="btn btn-outline-secondary btn-lg shadow-sm me-2">Cancelar</a>
             <button type="submit" class="btn btn-outline-warning btn-lg shadow-sm">Salvar Alterações</button>
         </div>
     </form>

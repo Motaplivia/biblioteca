@@ -21,7 +21,21 @@ def get_emprestimo(emprestimo_id: int, db: Session = Depends(get_db)):
 
 @router.post("/emprestimos", response_model=schemas.Emprestimo, status_code=status.HTTP_201_CREATED)
 def add_emprestimo(emprestimo: schemas.EmprestimoCreate, db: Session = Depends(get_db)):
+    # Verificar se o livro tem exemplares disponíveis
+    livro = db.query(models.Livro).filter(models.Livro.id == emprestimo.livro_id).first()
+    if not livro or livro.exemplares_disponiveis <= 0:
+        raise HTTPException(status_code=400, detail="Livro não disponível para empréstimo")
+
+    # Verificar se o usuário existe
+    usuario = db.query(models.Usuario).filter(models.Usuario.id == emprestimo.usuario_id).first()
+    if not usuario:
+        raise HTTPException(status_code=400, detail="Usuário não encontrado")
+
     new_emprestimo = models.Emprestimo(**emprestimo.dict())
+    
+    # Atualizar quantidade de exemplares disponíveis
+    livro.exemplares_disponiveis = max(0, livro.exemplares_disponiveis - 1)
+    
     db.add(new_emprestimo)
     db.commit()
     db.refresh(new_emprestimo)
@@ -33,8 +47,14 @@ def update_emprestimo(emprestimo_id: int, updated_emprestimo: schemas.Emprestimo
     if emprestimo is None:
         raise HTTPException(status_code=404, detail="Empréstimo não encontrado.")
     
+    # Se o status está mudando para "Devolvido", atualizar exemplares disponíveis
+    if updated_emprestimo.status == "Devolvido" and emprestimo.status != "Devolvido":
+        livro = db.query(models.Livro).filter(models.Livro.id == emprestimo.livro_id).first()
+        livro.exemplares_disponiveis = min(livro.quantidade, livro.exemplares_disponiveis + 1)
+    
     for key, value in updated_emprestimo.dict(exclude_unset=True).items():
         setattr(emprestimo, key, value)
+    
     db.commit()
     db.refresh(emprestimo)
     return emprestimo

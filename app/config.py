@@ -1,4 +1,5 @@
 from pydantic_settings import BaseSettings
+from typing import Optional
 
 class Settings(BaseSettings):
     # Original variable names
@@ -8,6 +9,17 @@ class Settings(BaseSettings):
     POSTGRES_DB: str
     POSTGRES_HOST: str
     POSTGRES_HOSTNAME: str
+    
+    @property
+    def DATABASE_URL(self) -> str:
+        return (
+            f"postgresql://"
+            f"{self.POSTGRES_USER}:"
+            f"{self.POSTGRES_PASSWORD}@"
+            f"{self.POSTGRES_HOST}:"
+            f"{self.DATABASE_PORT}/"
+            f"{self.POSTGRES_DB}"
+        )
     
     # Allow additional fields from environment variables
     class Config:

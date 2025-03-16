@@ -1,24 +1,12 @@
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker
 from .config import settings
 
-URL_DATABASE = (
-    f"postgresql://"
-    f"{settings.POSTGRES_USER}:"
-    f"{settings.POSTGRES_PASSWORD}@"
-    f"{settings.POSTGRES_HOST}:"
-    f"{settings.DATABASE_PORT}/"
-    f"{settings.POSTGRES_DB}"
-)
+SQLALCHEMY_DATABASE_URL = settings.DATABASE_URL
 
-engine = create_engine(URL_DATABASE, echo=True)
-
-SessionLocal = sessionmaker(
-    autocommit=False, 
-    autoflush=False,
-    bind=engine
-)
+engine = create_engine(SQLALCHEMY_DATABASE_URL)
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 Base = declarative_base()
 
@@ -28,3 +16,8 @@ def get_db():
         yield db
     finally:
         db.close()
+
+def recreate_database():
+    from . import models
+    Base.metadata.drop_all(bind=engine)
+    Base.metadata.create_all(bind=engine)
