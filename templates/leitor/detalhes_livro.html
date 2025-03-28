@@ -1,0 +1,131 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <!-- Imagem e Informações Básicas -->
+        <div class="col-md-4">
+            <div class="card shadow-sm">
+                {% if livro.imagem_url %}
+                <img src="{{ livro.imagem_url }}" class="card-img-top" alt="{{ livro.titulo }}" style="height: 400px; object-fit: cover;">
+                {% else %}
+                <div class="card-img-top bg-light d-flex align-items-center justify-content-center" style="height: 400px;">
+                    <i class="fas fa-book fa-5x text-muted"></i>
+                </div>
+                {% endif %}
+                <div class="card-body">
+                    <h5 class="card-title">{{ livro.titulo }}</h5>
+                    <p class="card-text">
+                        <i class="fas fa-user"></i> <strong>Autor:</strong> {{ livro.autor }}
+                    </p>
+                    <p class="card-text">
+                        <i class="fas fa-calendar"></i> <strong>Ano:</strong> {{ livro.ano_publicacao }}
+                    </p>
+                    <p class="card-text">
+                        <i class="fas fa-bookmark"></i> <strong>Páginas:</strong> {{ livro.numero_paginas }}
+                    </p>
+                    <p class="card-text">
+                        <i class="fas fa-barcode"></i> <strong>ISBN:</strong> {{ livro.isbn }}
+                    </p>
+                    <p class="card-text">
+                        <i class="fas fa-layer-group"></i> <strong>Categoria:</strong> {{ livro.categoria.nome }}
+                    </p>
+                    <p class="card-text">
+                        <i class="fas fa-box"></i> <strong>Disponíveis:</strong> {{ livro.exemplares_disponiveis }}
+                    </p>
+                    {% if not emprestimo_atual and livro.exemplares_disponiveis > 0 %}
+                    <form method="POST" action="/livro/{{ livro.id }}/emprestar">
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="fas fa-book-reader"></i> Emprestar
+                        </button>
+                    </form>
+                    {% elif emprestimo_atual %}
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i> Você já tem este livro emprestado.
+                        <a href="/meus-emprestimos" class="alert-link">Ver meus empréstimos</a>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle"></i> Livro não disponível no momento.
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Descrição e Resenhas -->
+        <div class="col-md-8">
+            <!-- Descrição -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-body">
+                    <h5 class="card-title">Descrição</h5>
+                    <p class="card-text">{{ livro.descricao }}</p>
+                </div>
+            </div>
+
+            <!-- Resenhas -->
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">Resenhas</h5>
+                    
+                    <!-- Formulário de Resenha -->
+                    {% if not emprestimo_atual %}
+                    <form method="POST" action="/livro/{{ livro.id }}/resenha" class="mb-4">
+                        <div class="mb-3">
+                            <label for="avaliacao" class="form-label">Sua Avaliação</label>
+                            <select class="form-select" id="avaliacao" name="avaliacao" required>
+                                <option value="5">5 estrelas</option>
+                                <option value="4">4 estrelas</option>
+                                <option value="3">3 estrelas</option>
+                                <option value="2">2 estrelas</option>
+                                <option value="1">1 estrela</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="texto" class="form-label">Sua Resenha</label>
+                            <textarea class="form-control" id="texto" name="texto" rows="4" required></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-pen"></i> Enviar Resenha
+                        </button>
+                    </form>
+                    {% endif %}
+
+                    <!-- Lista de Resenhas -->
+                    {% if resenhas %}
+                    <div class="mt-4">
+                        {% for resenha in resenhas %}
+                        <div class="card mb-3">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <h6 class="card-subtitle mb-2 text-muted">
+                                        <i class="fas fa-user"></i> {{ resenha.usuario.nome }}
+                                    </h6>
+                                    <small class="text-muted">
+                                        {{ resenha.data_criacao.strftime('%d/%m/%Y') }}
+                                    </small>
+                                </div>
+                                <div class="mb-2">
+                                    {% for i in range(resenha.avaliacao) %}
+                                    <i class="fas fa-star text-warning"></i>
+                                    {% endfor %}
+                                    {% for i in range(5 - resenha.avaliacao) %}
+                                    <i class="far fa-star text-warning"></i>
+                                    {% endfor %}
+                                </div>
+                                <p class="card-text">{{ resenha.texto }}</p>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i> Ainda não há resenhas para este livro.
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

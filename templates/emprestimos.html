@@ -1,31 +1,25 @@
-{% extends 'base.html' %}
+{% extends "base.html" %}
 
 {% block content %}
-<div class="container-fluid py-4">
-    <div class="row mb-4">
-        <div class="col">
-            <div class="d-sm-flex align-items-center justify-content-between">
-                <h1 class="h3 mb-0 text-gray-800">Empréstimos</h1>
-                <a href="/emprestimos/adicionar" class="d-none d-sm-inline-block btn btn-primary shadow-sm">
-                    <i class="fas fa-plus fa-sm me-2"></i>Novo Empréstimo
-                </a>
-            </div>
-        </div>
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="fas fa-exchange-alt"></i> Empréstimos</h2>
+        <a href="/emprestimos/adicionar" class="btn btn-primary">
+            <i class="fas fa-plus"></i> Novo Empréstimo
+        </a>
     </div>
 
-    <div class="card shadow mb-4">
-        <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-            <h6 class="m-0 font-weight-bold text-primary">Lista de Empréstimos</h6>
-            <div class="dropdown no-arrow">
-                <a href="/emprestimos/adicionar" class="btn btn-sm btn-primary shadow-sm d-sm-none">
-                    <i class="fas fa-plus fa-sm"></i>
-                </a>
-            </div>
-        </div>
+    {% if error %}
+    <div class="alert alert-danger" role="alert">
+        <i class="fas fa-exclamation-circle"></i> {{ error }}
+    </div>
+    {% endif %}
+
+    <div class="card shadow">
         <div class="card-body">
             <div class="table-responsive">
                 <table class="table table-hover">
-                    <thead class="table-light">
+                    <thead>
                         <tr>
                             <th>ID</th>
                             <th>Livro</th>
@@ -34,71 +28,51 @@
                             <th>Devolução Prevista</th>
                             <th>Devolução Efetiva</th>
                             <th>Status</th>
-                            <th class="text-end">Ações</th>
+                            <th>Ações</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for emprestimo in emprestimos %}
                         <tr>
                             <td>{{ emprestimo.id }}</td>
-                            <td>
-                                <div class="d-flex align-items-center">
-                                    <i class="fas fa-book text-primary me-2"></i>
-                                    <div>
-                                        <div class="fw-bold">{{ emprestimo.livro.titulo if emprestimo.livro else "N/A" }}</div>
-                                        <small class="text-muted">ISBN: {{ emprestimo.livro.isbn if emprestimo.livro else "N/A" }}</small>
-                                    </div>
-                                </div>
-                            </td>
-                            <td>
-                                <div class="d-flex align-items-center">
-                                    <i class="fas fa-user text-secondary me-2"></i>
-                                    <div>
-                                        <div>{{ emprestimo.usuario.nome if emprestimo.usuario else "N/A" }}</div>
-                                        <small class="text-muted">{{ emprestimo.usuario.email if emprestimo.usuario else "" }}</small>
-                                    </div>
-                                </div>
-                            </td>
+                            <td>{{ emprestimo.livro.titulo }}</td>
+                            <td>{{ emprestimo.usuario.nome }}</td>
                             <td>{{ emprestimo.data_emprestimo.strftime('%d/%m/%Y') }}</td>
                             <td>{{ emprestimo.data_devolucao_prevista.strftime('%d/%m/%Y') }}</td>
                             <td>
                                 {% if emprestimo.data_devolucao_efetiva %}
-                                    {{ emprestimo.data_devolucao_efetiva.strftime('%d/%m/%Y') }}
+                                {{ emprestimo.data_devolucao_efetiva.strftime('%d/%m/%Y') }}
                                 {% else %}
-                                    <span class="text-muted">-</span>
+                                -
                                 {% endif %}
                             </td>
                             <td>
-                                {% if emprestimo.status == "Ativo" %}
-                                    <span class="badge bg-primary rounded-pill">{{ emprestimo.status }}</span>
-                                {% elif emprestimo.status == "Devolvido" %}
-                                    <span class="badge bg-success rounded-pill">{{ emprestimo.status }}</span>
-                                {% else %}
-                                    <span class="badge bg-danger rounded-pill">{{ emprestimo.status }}</span>
-                                {% endif %}
+                                <span class="badge {% if emprestimo.status == 'Ativo' %}bg-success{% else %}bg-secondary{% endif %}">
+                                    {{ emprestimo.status }}
+                                </span>
                             </td>
                             <td>
-                                <div class="d-flex justify-content-end gap-2">
-                                    {% if emprestimo.status == "Ativo" %}
-                                        <form action="/emprestimos/{{ emprestimo.id }}/devolver" method="post" class="d-inline">
-                                            <button type="submit" class="btn btn-success btn-sm" title="Devolver">
-                                                <i class="fas fa-undo-alt"></i>
-                                            </button>
-                                        </form>
-                                    {% endif %}
-                                    <a href="/emprestimos/editar/{{ emprestimo.id }}" class="btn btn-warning btn-sm" title="Editar">
-                                        <i class="fas fa-edit"></i>
-                                    </a>
-                                    <a href="/emprestimos/deletar/{{ emprestimo.id }}" class="btn btn-danger btn-sm" title="Deletar">
-                                        <i class="fas fa-trash"></i>
-                                    </a>
-                                </div>
-                            </td>   
+                                {% if emprestimo.status == 'Ativo' %}
+                                <form method="POST" action="/emprestimos/{{ emprestimo.id }}/devolver" class="d-inline">
+                                    <button type="submit" class="btn btn-sm btn-success" onclick="return confirm('Confirmar devolução?')">
+                                        <i class="fas fa-check"></i> Devolver
+                                    </button>
+                                </form>
+                                {% endif %}
+                            </td>
                         </tr>
                         {% endfor %}
                     </tbody>
                 </table>
             </div>
+
+            {% if not emprestimos %}
+            <div class="text-center py-4">
+                <p class="text-muted mb-0">
+                    <i class="fas fa-info-circle"></i> Nenhum empréstimo encontrado.
+                </p>
+            </div>
+            {% endif %}
         </div>
     </div>
 </div>

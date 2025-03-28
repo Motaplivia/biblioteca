@@ -1,6 +1,8 @@
-from pydantic import BaseModel, Field, validator, EmailStr
+from pydantic import BaseModel, Field, validator, EmailStr, constr
 from typing import List, Optional
 from datetime import date, datetime
+from .models import NivelAcesso
+from enum import Enum
 
 # Pydantic Models para Livro
 class LivroBase(BaseModel):
@@ -11,6 +13,15 @@ class LivroBase(BaseModel):
     quantidade: int = Field(default=1, ge=1, description="Quantidade total")
     exemplares_disponiveis: Optional[int] = Field(None, ge=0, description="Quantidade disponível para empréstimo")
     categoria_id: int = Field(..., gt=0, description="ID da categoria")
+    descricao: Optional[str] = None
+    numero_paginas: Optional[int] = Field(None, gt=0)
+    editora: Optional[str] = None
+    idioma: Optional[str] = None
+    palavras_chave: Optional[str] = None
+    categoria: str = Field(..., description="Categoria do livro")
+    localizacao: str = Field(..., description="Localização física do livro na biblioteca")
+    quantidade_total: int = Field(..., ge=0, description="Quantidade total de exemplares")
+    quantidade_disponivel: int = Field(..., ge=0, description="Quantidade de exemplares disponíveis")
     
     @validator('titulo')
     def titulo_nao_vazio(cls, v):
@@ -37,10 +48,15 @@ class LivroBase(BaseModel):
 class LivroCreate(LivroBase):
     pass
 
+class LivroUpdate(LivroBase):
+    pass
+
 class Livro(LivroBase):
     id: int
     disponivel: bool
     data_cadastro: datetime
+    imagem_url: Optional[str] = None
+    status: str = Field(default="Disponível", description="Status atual do livro")
     
     class Config:
         from_attributes = True
@@ -50,47 +66,21 @@ class LivroFull(Livro):
 
 # Pydantic Models para Categoria
 class CategoriaBase(BaseModel):
-    nome: str = Field(..., min_length=1, max_length=50, description="Nome da categoria")
-    descricao: str = Field(..., min_length=1, max_length=200, description="Descrição da categoria")
-    
-    @validator('nome')
-    def nome_nao_vazio(cls, v):
-        v = v.strip()
-        if not v:
-            raise ValueError('Nome da categoria não pode estar vazio')
-        return v
+    nome: str = Field(..., min_length=1, max_length=50)
+    descricao: Optional[str] = None
 
 class CategoriaCreate(CategoriaBase):
     pass
 
-class CategoriaSimples(CategoriaBase):
+class Categoria(CategoriaBase):
     id: int
-    
+    livros: List[Livro] = []
+
     class Config:
         from_attributes = True
 
-class Categoria(CategoriaSimples):
-    livros: List[Livro] = []
-
-# Pydantic Models para Usuario
-class UsuarioBase(BaseModel):
-    nome: str = Field(..., min_length=1, max_length=100, description="Nome do usuário")
-    email: EmailStr = Field(..., description="Email do usuário")
-    tipo: str = Field(..., description="Tipo do usuário (Admin, Bibliotecário, Leitor)")
-
-    @validator('tipo')
-    def validar_tipo(cls, v):
-        tipos_validos = ["Admin", "Bibliotecário", "Leitor"]
-        if v not in tipos_validos:
-            raise ValueError(f'Tipo deve ser um dos seguintes: {", ".join(tipos_validos)}')
-        return v
-
-class UsuarioCreate(UsuarioBase):
-    senha: str = Field(..., min_length=6, description="Senha do usuário")
-
-class Usuario(UsuarioBase):
+class CategoriaSimples(CategoriaBase):
     id: int
-    data_registro: datetime
 
     class Config:
         from_attributes = True
@@ -99,26 +89,88 @@ class Usuario(UsuarioBase):
 class EmprestimoBase(BaseModel):
     livro_id: int = Field(..., gt=0, description="ID do livro")
     usuario_id: int = Field(..., gt=0, description="ID do usuário")
-    data_devolucao_prevista: date = Field(..., description="Data de devolução prevista")
-    
-    @validator('data_devolucao_prevista')
-    def data_devolucao_posterior(cls, v):
-        if v < date.today():
-            raise ValueError('A data de devolução prevista deve ser posterior à data atual')
-        return v
+    data_emprestimo: date = Field(default_factory=date.today, description="Data do empréstimo")
+    data_devolucao_prevista: date = Field(..., description="Data prevista para devolução")
+    data_devolucao_efetiva: Optional[date] = Field(None, description="Data efetiva da devolução")
+    status: str = Field(default="Ativo", description="Status do empréstimo")
+    renovacoes_feitas: int = Field(default=0, description="Número de renovações feitas")
+    multa: float = Field(default=0.0, description="Valor da multa")
 
 class EmprestimoCreate(EmprestimoBase):
     pass
 
+class EmprestimoUpdate(EmprestimoBase):
+    pass
+
 class Emprestimo(EmprestimoBase):
     id: int
-    data_emprestimo: date
-    data_devolucao_efetiva: Optional[date] = None
-    status: str = Field(..., description="Status do empréstimo (Ativo, Devolvido, Atrasado)")
-    
+    livro: Livro
+    usuario: 'Usuario'
+
     class Config:
         from_attributes = True
 
-class EmprestimoFull(Emprestimo):
-    livro: Optional[Livro] = None
-    usuario: Optional[Usuario] = None
+# Pydantic Models para Usuario
+class NivelAcesso(str, Enum):
+    ADMIN = "admin"
+    BIBLIOTECARIO = "bibliotecario"
+    USUARIO = "usuario"
+
+class UsuarioBase(BaseModel):
+    nome: str = Field(..., description="Nome completo do usuário")
+    email: EmailStr = Field(..., description="Email do usuário")
+    cpf: Optional[str] = Field(None, description="CPF do usuário (apenas números)")
+    telefone: Optional[str] = Field(None, description="Telefone do usuário")
+    data_nascimento: Optional[date] = Field(None, description="Data de nascimento do usuário")
+    endereco: Optional[str] = Field(None, description="Endereço completo do usuário")
+    nivel_acesso: NivelAcesso = Field(default=NivelAcesso.USUARIO, description="Nível de acesso do usuário")
+    limite_emprestimos: int = Field(default=3, ge=0, le=10, description="Limite de empréstimos simultâneos")
+    ativo: bool = Field(default=True, description="Status do usuário")
+
+class UsuarioCreate(UsuarioBase):
+    senha: str = Field(..., min_length=6, description="Senha do usuário")
+
+class UsuarioUpdate(UsuarioBase):
+    senha: Optional[str] = Field(None, min_length=6, description="Nova senha do usuário")
+
+class Usuario(UsuarioBase):
+    id: int
+    data_registro: datetime
+    multa: float = Field(default=0.0, description="Valor da multa atual")
+    multas_pendentes: float = Field(default=0.0, description="Valor total de multas pendentes")
+    emprestimos: List[Emprestimo] = []
+
+    class Config:
+        from_attributes = True
+
+# Pydantic Models para Resenha
+class ResenhaBase(BaseModel):
+    livro_id: int = Field(..., gt=0)
+    texto: str = Field(..., min_length=1)
+    avaliacao: int = Field(..., ge=1, le=5)
+
+class ResenhaCreate(ResenhaBase):
+    pass
+
+class Resenha(ResenhaBase):
+    id: int
+    usuario_id: int
+    data_criacao: datetime
+    livro: Livro
+    usuario: Usuario
+
+    class Config:
+        from_attributes = True
+
+# Atualizar referências circulares
+Livro.model_rebuild()
+Categoria.model_rebuild()
+Emprestimo.model_rebuild()
+Usuario.model_rebuild()
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+
+class TokenData(BaseModel):
+    email: Optional[str] = None

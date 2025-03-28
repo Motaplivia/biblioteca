@@ -1,4 +1,4 @@
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from .config import settings
@@ -19,5 +19,13 @@ def get_db():
 
 def recreate_database():
     from . import models
-    Base.metadata.drop_all(bind=engine)
+    # Primeiro, dropar todas as tabelas com CASCADE
+    with engine.connect() as conn:
+        conn.execute(text("DROP SCHEMA public CASCADE;"))
+        conn.execute(text("CREATE SCHEMA public;"))
+        conn.execute(text("GRANT ALL ON SCHEMA public TO db;"))
+        conn.execute(text("GRANT ALL ON SCHEMA public TO public;"))
+        conn.commit()
+    
+    # Depois, criar todas as tabelas novamente
     Base.metadata.create_all(bind=engine)

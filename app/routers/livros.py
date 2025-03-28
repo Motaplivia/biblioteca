@@ -1,52 +1,303 @@
-from fastapi import APIRouter, HTTPException, status, Depends
+from fastapi import APIRouter, HTTPException, status, Depends, Request, Form, UploadFile, File
 from sqlalchemy.orm import Session
 from typing import List
 from .. import models, schemas
-from ..database import  get_db
+from ..database import get_db
+from fastapi.templating import Jinja2Templates
+from fastapi.responses import RedirectResponse
+from datetime import datetime
+import os
+import shutil
+from ..main import obter_usuario_atual
 
 router = APIRouter()
+templates = Jinja2Templates(directory="templates")
+
+# Configuração para upload de imagens
+UPLOAD_DIR = "static/uploads"
+if not os.path.exists(UPLOAD_DIR):
+    os.makedirs(UPLOAD_DIR)
 
 # rotas livros
-@router.get("/livros", response_model=List[schemas.Livro])
-def list_livros(db: Session = Depends(get_db)):
-    livros = db.query(models.Livro).all()
-    return livros
-
-@router.get("/livros/{livro_id}", response_model=schemas.Livro)
-def get_livro(livro_id: int, db: Session = Depends(get_db)):
-    livro = db.query(models.Livro).filter(models.Livro.id == livro_id).first()
-    if livro is None:
-        raise HTTPException(status_code=404, detail="Livro não encontrado.")
-    return livro
-
-@router.post("/livros", response_model=schemas.Livro, status_code=status.HTTP_201_CREATED)
-def add_livro(livro: schemas.LivroCreate, db: Session = Depends(get_db)):
-    new_livro = models.Livro(**livro.dict())
-    db.add(new_livro)
-    db.commit()
-    db.refresh(new_livro)
-    return new_livro
-
-@router.put("/livros/{livro_id}", response_model=schemas.Livro)
-def update_livro(livro_id: int, updated_livro: schemas.LivroCreate, db: Session = Depends(get_db)):
-    livro = db.query(models.Livro).filter(models.Livro.id == livro_id).first()
-    if livro is None:
-        raise HTTPException(status_code=404, detail="Livro não encontrado.")
+@router.get("/livros")
+async def listar_livros(
+    request: Request,
+    db: Session = Depends(get_db),
+    usuario_atual: models.Usuario = Depends(obter_usuario_atual)
+):
+    if not usuario_atual.tem_permissao("gerenciar_livros"):
+        raise HTTPException(status_code=403, detail="Sem permissão para acessar esta página")
     
-    for key, value in updated_livro.dict(exclude_unset=True).items():
-        setattr(livro, key, value)
-    db.commit()
-    db.refresh(livro)
-    return livro
+    livros = db.query(models.Livro).all()
+    return templates.TemplateResponse(
+        "livros.html",
+        {
+            "request": request,
+            "livros": livros,
+            "usuario": usuario_atual
+        }
+    )
 
-@router.delete("/livros/{livro_id}", response_model=dict, status_code=status.HTTP_200_OK)
-def delete_livro(livro_id: int, db: Session = Depends(get_db)):
+@router.get("/livros/{livro_id}")
+async def detalhes_livro(
+    livro_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+    usuario_atual: models.Usuario = Depends(obter_usuario_atual)
+):
+    if not usuario_atual.tem_permissao("gerenciar_livros"):
+        raise HTTPException(status_code=403, detail="Sem permissão para acessar esta página")
+    
     livro = db.query(models.Livro).filter(models.Livro.id == livro_id).first()
     if livro is None:
-        raise HTTPException(status_code=404, detail="Livro não encontrado.")
-    db.delete(livro)
-    db.commit()
-    return {"message": f"Livro com ID {livro_id} deletado com sucesso."}
+        raise HTTPException(status_code=404, detail="Livro não encontrado")
+    
+    return templates.TemplateResponse(
+        "detalhes_livro.html",
+        {
+            "request": request,
+            "livro": livro,
+            "usuario": usuario_atual
+        }
+    )
+
+@router.get("/livros/adicionar")
+async def adicionar_livro_form(
+    request: Request,
+    db: Session = Depends(get_db),
+    usuario_atual: models.Usuario = Depends(obter_usuario_atual)
+):
+    if not usuario_atual.tem_permissao("gerenciar_livros"):
+        raise HTTPException(status_code=403, detail="Sem permissão para acessar esta página")
+    
+    categorias = db.query(models.Categoria).all()
+    return templates.TemplateResponse(
+        "adicionar_livro.html",
+        {
+            "request": request,
+            "categorias": categorias,
+            "usuario": usuario_atual
+        }
+    )
+
+@router.post("/livros/adicionar")
+async def adicionar_livro(
+    request: Request,
+    titulo: str = Form(...),
+    autor: str = Form(...),
+    ano_publicacao: int = Form(...),
+    isbn: str = Form(...),
+    quantidade: int = Form(...),
+    categoria_id: int = Form(...),
+    descricao: str = Form(...),
+    numero_paginas: int = Form(...),
+    imagem: UploadFile = File(None),
+    db: Session = Depends(get_db),
+    usuario_atual: models.Usuario = Depends(obter_usuario_atual)
+):
+    if not usuario_atual.tem_permissao("gerenciar_livros"):
+        raise HTTPException(status_code=403, detail="Sem permissão para realizar esta ação")
+    
+    try:
+        # Processar imagem se fornecida
+        imagem_url = None
+        if imagem:
+            # Gerar nome único para o arquivo
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            filename = f"{timestamp}_{imagem.filename}"
+            filepath = os.path.join(UPLOAD_DIR, filename)
+            
+            # Salvar arquivo
+            with open(filepath, "wb") as buffer:
+                shutil.copyfileobj(imagem.file, buffer)
+            
+            imagem_url = f"/static/uploads/{filename}"
+        
+        # Criar novo livro
+        novo_livro = models.Livro(
+            titulo=titulo,
+            autor=autor,
+            ano_publicacao=ano_publicacao,
+            isbn=isbn,
+            quantidade=quantidade,
+            exemplares_disponiveis=quantidade,
+            categoria_id=categoria_id,
+            descricao=descricao,
+            numero_paginas=numero_paginas,
+            imagem_url=imagem_url,
+            data_cadastro=datetime.now()
+        )
+        
+        db.add(novo_livro)
+        db.commit()
+        db.refresh(novo_livro)
+        
+        return RedirectResponse(url="/livros", status_code=status.HTTP_303_SEE_OTHER)
+    except Exception as e:
+        print(f"Erro ao criar livro: {str(e)}")
+        return templates.TemplateResponse(
+            "adicionar_livro.html",
+            {
+                "request": request,
+                "error": "Erro ao criar livro",
+                "usuario": usuario_atual
+            }
+        )
+
+@router.get("/livros/editar/{livro_id}")
+async def editar_livro_form(
+    livro_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+    usuario_atual: models.Usuario = Depends(obter_usuario_atual)
+):
+    if not usuario_atual.tem_permissao("gerenciar_livros"):
+        raise HTTPException(status_code=403, detail="Sem permissão para acessar esta página")
+    
+    livro = db.query(models.Livro).filter(models.Livro.id == livro_id).first()
+    if livro is None:
+        raise HTTPException(status_code=404, detail="Livro não encontrado")
+    
+    categorias = db.query(models.Categoria).all()
+    return templates.TemplateResponse(
+        "editar_livro.html",
+        {
+            "request": request,
+            "livro": livro,
+            "categorias": categorias,
+            "usuario": usuario_atual
+        }
+    )
+
+@router.post("/livros/editar/{livro_id}")
+async def editar_livro(
+    livro_id: int,
+    request: Request,
+    titulo: str = Form(...),
+    autor: str = Form(...),
+    ano_publicacao: int = Form(...),
+    isbn: str = Form(...),
+    quantidade: int = Form(...),
+    categoria_id: int = Form(...),
+    descricao: str = Form(...),
+    numero_paginas: int = Form(...),
+    imagem: UploadFile = File(None),
+    db: Session = Depends(get_db),
+    usuario_atual: models.Usuario = Depends(obter_usuario_atual)
+):
+    if not usuario_atual.tem_permissao("gerenciar_livros"):
+        raise HTTPException(status_code=403, detail="Sem permissão para realizar esta ação")
+    
+    try:
+        livro = db.query(models.Livro).filter(models.Livro.id == livro_id).first()
+        if livro is None:
+            raise HTTPException(status_code=404, detail="Livro não encontrado")
+        
+        # Processar nova imagem se fornecida
+        if imagem:
+            # Gerar nome único para o arquivo
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            filename = f"{timestamp}_{imagem.filename}"
+            filepath = os.path.join(UPLOAD_DIR, filename)
+            
+            # Salvar novo arquivo
+            with open(filepath, "wb") as buffer:
+                shutil.copyfileobj(imagem.file, buffer)
+            
+            # Remover imagem antiga se existir
+            if livro.imagem_url:
+                old_filepath = os.path.join("static", livro.imagem_url.lstrip("/"))
+                if os.path.exists(old_filepath):
+                    os.remove(old_filepath)
+            
+            livro.imagem_url = f"/static/uploads/{filename}"
+        
+        # Atualizar dados do livro
+        livro.titulo = titulo
+        livro.autor = autor
+        livro.ano_publicacao = ano_publicacao
+        livro.isbn = isbn
+        livro.quantidade = quantidade
+        livro.exemplares_disponiveis = max(0, quantidade - (livro.quantidade - livro.exemplares_disponiveis))
+        livro.categoria_id = categoria_id
+        livro.descricao = descricao
+        livro.numero_paginas = numero_paginas
+        
+        db.commit()
+        db.refresh(livro)
+        
+        return RedirectResponse(url="/livros", status_code=status.HTTP_303_SEE_OTHER)
+    except Exception as e:
+        print(f"Erro ao atualizar livro: {str(e)}")
+        return templates.TemplateResponse(
+            "editar_livro.html",
+            {
+                "request": request,
+                "livro": livro,
+                "error": "Erro ao atualizar livro",
+                "usuario": usuario_atual
+            }
+        )
+
+@router.get("/livros/deletar/{livro_id}")
+async def deletar_livro_form(
+    livro_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+    usuario_atual: models.Usuario = Depends(obter_usuario_atual)
+):
+    if not usuario_atual.tem_permissao("gerenciar_livros"):
+        raise HTTPException(status_code=403, detail="Sem permissão para acessar esta página")
+    
+    livro = db.query(models.Livro).filter(models.Livro.id == livro_id).first()
+    if livro is None:
+        raise HTTPException(status_code=404, detail="Livro não encontrado")
+    
+    return templates.TemplateResponse(
+        "deletar_livro.html",
+        {
+            "request": request,
+            "livro": livro,
+            "usuario": usuario_atual
+        }
+    )
+
+@router.post("/livros/deletar/{livro_id}")
+async def deletar_livro(
+    livro_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+    usuario_atual: models.Usuario = Depends(obter_usuario_atual)
+):
+    if not usuario_atual.tem_permissao("gerenciar_livros"):
+        raise HTTPException(status_code=403, detail="Sem permissão para realizar esta ação")
+    
+    try:
+        livro = db.query(models.Livro).filter(models.Livro.id == livro_id).first()
+        if livro is None:
+            raise HTTPException(status_code=404, detail="Livro não encontrado")
+        
+        # Remover imagem se existir
+        if livro.imagem_url:
+            filepath = os.path.join("static", livro.imagem_url.lstrip("/"))
+            if os.path.exists(filepath):
+                os.remove(filepath)
+        
+        db.delete(livro)
+        db.commit()
+        
+        return RedirectResponse(url="/livros", status_code=status.HTTP_303_SEE_OTHER)
+    except Exception as e:
+        print(f"Erro ao deletar livro: {str(e)}")
+        return templates.TemplateResponse(
+            "deletar_livro.html",
+            {
+                "request": request,
+                "livro": livro,
+                "error": "Erro ao deletar livro",
+                "usuario": usuario_atual
+            }
+        )
 
 
 

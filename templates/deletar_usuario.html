@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card">
+                <div class="card-header">
+                    <h2>Confirmar Exclusão de Usuário</h2>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-danger" role="alert">
+                        <h4 class="alert-heading">Atenção!</h4>
+                        <p>Você está prestes a excluir o usuário <strong>{{ usuario_edit.nome }}</strong>.</p>
+                        <p>Esta ação não poderá ser desfeita.</p>
+                    </div>
+
+                    <div class="card mb-4">
+                        <div class="card-body">
+                            <h5 class="card-title">Informações do Usuário</h5>
+                            <dl class="row">
+                                <dt class="col-sm-3">Nome:</dt>
+                                <dd class="col-sm-9">{{ usuario_edit.nome }}</dd>
+
+                                <dt class="col-sm-3">Email:</dt>
+                                <dd class="col-sm-9">{{ usuario_edit.email }}</dd>
+
+                                <dt class="col-sm-3">CPF:</dt>
+                                <dd class="col-sm-9">{{ usuario_edit.cpf or 'Não informado' }}</dd>
+
+                                <dt class="col-sm-3">Nível de Acesso:</dt>
+                                <dd class="col-sm-9">{{ usuario_edit.nivel_acesso }}</dd>
+
+                                <dt class="col-sm-3">Status:</dt>
+                                <dd class="col-sm-9">
+                                    <span class="badge {% if usuario_edit.ativo %}bg-success{% else %}bg-danger{% endif %}">
+                                        {{ 'Ativo' if usuario_edit.ativo else 'Inativo' }}
+                                    </span>
+                                </dd>
+
+                                <dt class="col-sm-3">Multa Atual:</dt>
+                                <dd class="col-sm-9">
+                                    {% if usuario_edit.multa > 0 %}
+                                    <span class="text-danger">R$ {{ "%.2f"|format(usuario_edit.multa) }}</span>
+                                    {% else %}
+                                    <span class="text-success">Sem multas</span>
+                                    {% endif %}
+                                </dd>
+                            </dl>
+                        </div>
+                    </div>
+
+                    <form method="POST">
+                        <div class="d-flex justify-content-between">
+                            <a href="/usuarios" class="btn btn-secondary">Cancelar</a>
+                            <button type="submit" class="btn btn-danger">Confirmar Exclusão</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

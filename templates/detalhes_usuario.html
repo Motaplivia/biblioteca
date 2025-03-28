@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card">
+                <div class="card-header">
+                    <h2>Detalhes do Usuário</h2>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-4"><strong>Nome:</strong></div>
+                        <div class="col-md-8">{{ usuario_detalhes.nome }}</div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-4"><strong>Email:</strong></div>
+                        <div class="col-md-8">{{ usuario_detalhes.email }}</div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-4"><strong>CPF:</strong></div>
+                        <div class="col-md-8">{{ usuario_detalhes.cpf or 'Não informado' }}</div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-4"><strong>Telefone:</strong></div>
+                        <div class="col-md-8">{{ usuario_detalhes.telefone or 'Não informado' }}</div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-4"><strong>Data de Nascimento:</strong></div>
+                        <div class="col-md-8">{{ usuario_detalhes.data_nascimento.strftime('%d/%m/%Y') if usuario_detalhes.data_nascimento else 'Não informada' }}</div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-4"><strong>Endereço:</strong></div>
+                        <div class="col-md-8">{{ usuario_detalhes.endereco or 'Não informado' }}</div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-4"><strong>Nível de Acesso:</strong></div>
+                        <div class="col-md-8">{{ usuario_detalhes.nivel_acesso }}</div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-4"><strong>Status:</strong></div>
+                        <div class="col-md-8">
+                            <span class="badge {% if usuario_detalhes.ativo %}bg-success{% else %}bg-danger{% endif %}">
+                                {{ 'Ativo' if usuario_detalhes.ativo else 'Inativo' }}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-4"><strong>Limite de Empréstimos:</strong></div>
+                        <div class="col-md-8">{{ usuario_detalhes.limite_emprestimos }}</div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-4"><strong>Multa Atual:</strong></div>
+                        <div class="col-md-8">
+                            {% if usuario_detalhes.multa > 0 %}
+                            <span class="text-danger">R$ {{ "%.2f"|format(usuario_detalhes.multa) }}</span>
+                            {% else %}
+                            <span class="text-success">Sem multas</span>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <h3 class="mt-4 mb-3">Empréstimos Ativos</h3>
+                    {% if usuario_detalhes.emprestimos %}
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Livro</th>
+                                        <th>Data de Empréstimo</th>
+                                        <th>Data de Devolução</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for emprestimo in usuario_detalhes.emprestimos %}
+                                    {% if emprestimo.status == "Ativo" %}
+                                    <tr>
+                                        <td>{{ emprestimo.livro.titulo }}</td>
+                                        <td>{{ emprestimo.data_emprestimo.strftime('%d/%m/%Y') }}</td>
+                                        <td>{{ emprestimo.data_devolucao_prevista.strftime('%d/%m/%Y') }}</td>
+                                        <td>
+                                            <span class="badge {% if emprestimo.esta_atrasado() %}bg-danger{% else %}bg-success{% endif %}">
+                                                {% if emprestimo.esta_atrasado() %}
+                                                Atrasado
+                                                {% else %}
+                                                Em dia
+                                                {% endif %}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                    {% endif %}
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <p>Nenhum empréstimo ativo.</p>
+                    {% endif %}
+
+                    <div class="mt-4">
+                        {% if usuario.tem_permissao('gerenciar_usuarios') %}
+                        <a href="/usuarios/editar/{{ usuario_detalhes.id }}" class="btn btn-primary me-2">Editar</a>
+                        <a href="/usuarios/deletar/{{ usuario_detalhes.id }}" class="btn btn-danger me-2">Deletar</a>
+                        {% endif %}
+                        <a href="/usuarios" class="btn btn-secondary">Voltar</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

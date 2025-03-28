@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card">
+                <div class="card-header">
+                    <h2>Editar Usuário</h2>
+                </div>
+                <div class="card-body">
+                    {% if error %}
+                    <div class="alert alert-danger" role="alert">
+                        {{ error }}
+                    </div>
+                    {% endif %}
+
+                    <form method="POST">
+                        <div class="mb-3">
+                            <label for="nome" class="form-label">Nome *</label>
+                            <input type="text" class="form-control" id="nome" name="nome" value="{{ usuario_edit.nome }}" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="email" class="form-label">Email *</label>
+                            <input type="email" class="form-control" id="email" name="email" value="{{ usuario_edit.email }}" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="senha" class="form-label">Nova Senha (deixe em branco para manter a atual)</label>
+                            <input type="password" class="form-control" id="senha" name="senha">
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="cpf" class="form-label">CPF</label>
+                            <input type="text" class="form-control" id="cpf" name="cpf" pattern="\d{3}\.\d{3}\.\d{3}-\d{2}" placeholder="000.000.000-00" value="{{ usuario_edit.cpf }}">
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="telefone" class="form-label">Telefone</label>
+                            <input type="tel" class="form-control" id="telefone" name="telefone" placeholder="(00) 00000-0000" value="{{ usuario_edit.telefone }}">
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="data_nascimento" class="form-label">Data de Nascimento</label>
+                            <input type="date" class="form-control" id="data_nascimento" name="data_nascimento" value="{{ usuario_edit.data_nascimento.strftime('%Y-%m-%d') if usuario_edit.data_nascimento }}">
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="endereco" class="form-label">Endereço</label>
+                            <textarea class="form-control" id="endereco" name="endereco" rows="2">{{ usuario_edit.endereco }}</textarea>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="nivel_acesso" class="form-label">Nível de Acesso *</label>
+                            <select class="form-select" id="nivel_acesso" name="nivel_acesso" required>
+                                <option value="usuario" {% if usuario_edit.nivel_acesso == 'usuario' %}selected{% endif %}>Usuário</option>
+                                <option value="bibliotecario" {% if usuario_edit.nivel_acesso == 'bibliotecario' %}selected{% endif %}>Bibliotecário</option>
+                                <option value="admin" {% if usuario_edit.nivel_acesso == 'admin' %}selected{% endif %}>Administrador</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="limite_emprestimos" class="form-label">Limite de Empréstimos</label>
+                            <input type="number" class="form-control" id="limite_emprestimos" name="limite_emprestimos" value="{{ usuario_edit.limite_emprestimos }}" min="0" max="10">
+                        </div>
+
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="ativo" name="ativo" {% if usuario_edit.ativo %}checked{% endif %}>
+                                <label class="form-check-label" for="ativo">
+                                    Usuário Ativo
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="mt-4">
+                            <button type="submit" class="btn btn-primary">Salvar Alterações</button>
+                            <a href="/usuarios" class="btn btn-secondary ms-2">Cancelar</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Máscara para CPF
+    const cpfInput = document.getElementById('cpf');
+    cpfInput.addEventListener('input', function(e) {
+        let value = e.target.value.replace(/\D/g, '');
+        if (value.length <= 11) {
+            value = value.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
+            e.target.value = value;
+        }
+    });
+
+    // Máscara para telefone
+    const telefoneInput = document.getElementById('telefone');
+    telefoneInput.addEventListener('input', function(e) {
+        let value = e.target.value.replace(/\D/g, '');
+        if (value.length <= 11) {
+            if (value.length > 2) {
+                value = '(' + value.substring(0,2) + ') ' + value.substring(2);
+            }
+            if (value.length > 9) {
+                value = value.substring(0,9) + '-' + value.substring(9);
+            }
+            e.target.value = value;
+        }
+    });
+});
+</script>
+{% endblock %} 
